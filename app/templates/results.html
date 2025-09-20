@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Evaluation Results</h2>
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Score Card -->
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <h5 class="card-title">Relevance Score</h5>
+        <div class="display-4 
+          {% if evaluation.final_score >= 80 %}score-high
+          {% elif evaluation.final_score >= 60 %}score-medium
+          {% else %}score-low
+          {% endif %}">
+          {{ "%.1f"|format(evaluation.final_score|float) }}%
+        </div>
+        <p class="card-text">
+          <span class="badge 
+            {% if evaluation.verdict == 'High' %}bg-success
+            {% elif evaluation.verdict == 'Medium' %}bg-warning
+            {% else %}bg-danger
+            {% endif %} fs-6">
+            {{ evaluation.verdict }} Suitability
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Detailed Scores -->
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Detailed Scores</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Keyword Match Score</label>
+              <div class="progress mb-2">
+                <div class="progress-bar" role="progressbar"
+                  data-width="{{ (evaluation.keyword_score or 0)|int }}"
+                  aria-valuenow="{{ (evaluation.keyword_score or 0)|int }}"
+                  aria-valuemin="0" aria-valuemax="100">
+                  {{ "%.1f"|format(evaluation.keyword_score or 0) }}%
+                </div>
+              </div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label">Semantic Similarity Score</label>
+              <div class="progress mb-2">
+                <div class="progress-bar" role="progressbar"
+                  data-width="{{ (evaluation.semantic_score or 0)|int }}"
+                  aria-valuenow="{{ (evaluation.semantic_score or 0)|int }}"
+                  aria-valuemin="0" aria-valuemax="100">
+                  {{ "%.1f"|format(evaluation.semantic_score or 0) }}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missing Elements -->
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Missing Elements</h5>
+          </div>
+          <div class="card-body">
+            {% if evaluation.missing_skills %}
+            <div class="mb-3">
+              <h6 class="text-danger">Missing Skills:</h6>
+              <ul class="list-group">
+                {% for skill in evaluation.missing_skills %}
+                <li class="list-group-item">{{ skill }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% else %}
+            <div class="mb-3">
+              <h6 class="text-success">No missing skills found!</h6>
+            </div>
+            {% endif %}
+
+            {% if evaluation.missing_education %}
+            <div class="mb-0">
+              <h6 class="text-danger">Missing Qualifications:</h6>
+              <ul class="list-group">
+                {% for qual in evaluation.missing_education %}
+                <li class="list-group-item">{{ qual }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% else %}
+            <div class="mb-0">
+              <h6 class="text-success">No missing qualifications found!</h6>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Improvement Feedback -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Improvement Feedback</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <i class="fas fa-lightbulb me-2"></i>
+          {{ evaluation.improvement_feedback }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Evaluation Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Resume Information</h6>
+            <p><strong>Student:</strong> {{ evaluation.resume.student_name or 'N/A' }}</p>
+            <p><strong>Email:</strong> {{ evaluation.resume.student_email or 'N/A' }}</p>
+            <p><strong>Location:</strong> {{ evaluation.resume.student_location or 'N/A' }}</p>
+          </div>
+          <div class="col-md-6">
+            <h6>Job Description</h6>
+            <p><strong>Title:</strong> {{ evaluation.job_description.title }}</p>
+            <p><strong>Company:</strong> {{ evaluation.job_description.company or 'N/A' }}</p>
+            <p><strong>Location:</strong> {{ evaluation.job_description.location or 'N/A' }}</p>
+          </div>
+        </div>
+        <div class="mt-3">
+          <p><strong>Evaluated on:</strong> {{ evaluation.evaluated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths based on data attributes
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+</script>
+{% endblock %}

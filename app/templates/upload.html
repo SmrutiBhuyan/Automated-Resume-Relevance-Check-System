@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="uploadTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="jd-tab" data-bs-toggle="tab" data-bs-target="#jd" type="button" role="tab">
+                            Upload Job Description
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="resume-tab" data-bs-toggle="tab" data-bs-target="#resume" type="button" role="tab">
+                            Upload Resume
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="uploadTabsContent">
+                    <!-- JD Upload Tab -->
+                    <div class="tab-pane fade show active" id="jd" role="tabpanel">
+                        <h5 class="card-title">Upload Job Description</h5>
+                        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload') }}">
+                            <input type="hidden" name="upload_type" value="jd">
+                            <div class="mb-3">
+                                <label for="jd_file" class="form-label">Job Description File (PDF/DOCX)</label>
+                                <input class="form-control" type="file" id="jd_file" name="jd_file" accept=".pdf,.docx" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="company" class="form-label">Company</label>
+                                        <input type="text" class="form-control" id="company" name="company">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="location" class="form-label">Location</label>
+                                        <input type="text" class="form-control" id="location" name="location">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload JD</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Resume Upload Tab -->
+                    <div class="tab-pane fade" id="resume" role="tabpanel">
+                        <h5 class="card-title">Upload Resume</h5>
+                        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload') }}">
+                            <input type="hidden" name="upload_type" value="resume">
+                            <div class="mb-3">
+                                <label for="jd_id" class="form-label">Select Job Description</label>
+                                <select class="form-select" id="jd_id" name="jd_id" required>
+                                    <option value="">Choose a job description...</option>
+                                    {% for jd in job_descriptions %}
+                                    <option value="{{ jd.id }}">{{ jd.title }} - {{ jd.company }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="resume_file" class="form-label">Resume File (PDF/DOCX)</label>
+                                <input class="form-control" type="file" id="resume_file" name="resume_file" accept=".pdf,.docx" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="student_name" class="form-label">Student Name</label>
+                                        <input type="text" class="form-control" id="student_name" name="student_name">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="student_email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="student_email" name="student_email">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="student_location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="student_location" name="student_location">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload Resume</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Activate the correct tab based on potential errors
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab === 'resume') {
+            const resumeTab = new bootstrap.Tab(document.getElementById('resume-tab'));
+            resumeTab.show();
+        }
+    });
+</script>
+{% endblock %}
