@@ -64,9 +64,15 @@ class ResumeEvaluation(db.Model):
     # Metadata
     evaluated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Upload session tracking
+    upload_session_id = db.Column(db.String(36))  # UUID for grouping bulk uploads
+    is_bulk_upload = db.Column(db.Boolean, default=False)
+    
     # Index for better query performance
     __table_args__ = (
         db.Index('idx_job_resume', 'job_description_id', 'resume_id'),
         db.Index('idx_final_score', 'final_score'),
         db.Index('idx_verdict', 'verdict'),
+        db.Index('idx_upload_session', 'upload_session_id'),
+        db.Index('idx_bulk_upload', 'is_bulk_upload'),
     )

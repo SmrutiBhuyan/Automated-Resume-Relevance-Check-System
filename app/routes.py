@@ -157,6 +157,7 @@ def upload():
             jd_id = request.form.get('jd_id')
             auto_evaluate = request.form.get('auto_evaluate') == 'on'
             generate_report = request.form.get('generate_report') == 'on'
+            clear_previous = request.form.get('clear_previous') == 'on'
             
             if not jd_id:
                 flash('Please select a job description.', 'error')
@@ -172,6 +173,19 @@ def upload():
                 flash('Selected job description not found.', 'error')
                 return render_template('upload.html', job_descriptions=job_descriptions)
             
+            # Clear previous evaluations if requested
+            if clear_previous:
+                try:
+                    ResumeEvaluation.query.filter_by(job_description_id=jd_id).delete()
+                    db.session.commit()
+                    flash('Previous evaluations cleared successfully.', 'info')
+                except Exception as e:
+                    flash(f'Error clearing previous evaluations: {str(e)}', 'error')
+                    return render_template('upload.html', job_descriptions=job_descriptions)
+            
+            # Generate upload session ID
+            upload_session_id = str(uuid.uuid4())
+            
             jd_data = {
                 'must_have_skills': jd.must_have_skills or [],
                 'good_to_have_skills': jd.good_to_have_skills or [],
@@ -183,6 +197,9 @@ def upload():
             evaluations = []
             successful_uploads = 0
             failed_uploads = 0
+            
+            # Start a fresh transaction
+            db.session.rollback()
             
             for resume_file in resume_files:
                 if resume_file and allowed_file(resume_file.filename):
@@ -236,7 +253,9 @@ def upload():
                                 missing_certifications=[],
                                 missing_education=evaluation_result['missing_elements']['missing_qualifications'],
                                 missing_projects=[],
-                                improvement_feedback=evaluation_result['improvement_feedback']
+                                improvement_feedback=evaluation_result['improvement_feedback'],
+                                upload_session_id=upload_session_id,
+                                is_bulk_upload=True
                             )
                             db.session.add(evaluation)
                             evaluations.append(evaluation)
@@ -286,11 +305,51 @@ def bulk_results(jd_id):
         # Get job description
         jd = JobDescription.query.get_or_404(jd_id)
         
-        # Get all evaluations for this job description
-        evaluations = ResumeEvaluation.query.filter_by(job_description_id=jd_id).join(Resume).all()
+        # Get filter parameters
+        session_filter = request.args.get('session')
+        date_filter = request.args.get('date')
+        show_only_bulk = request.args.get('bulk_only', 'false').lower() == 'true'
+        
+        # Build query
+        query = ResumeEvaluation.query.filter_by(job_description_id=jd_id).join(Resume)
+        
+        # Apply filters
+        if session_filter:
+            query = query.filter_by(upload_session_id=session_filter)
+        
+        if show_only_bulk:
+            query = query.filter_by(is_bulk_upload=True)
+        
+        if date_filter:
+            from datetime import datetime, timedelta
+            if date_filter == 'today':
+                today = datetime.utcnow().date()
+                query = query.filter(db.func.date(ResumeEvaluation.evaluated_at) == today)
+            elif date_filter == 'week':
+                week_ago = datetime.utcnow() - timedelta(days=7)
+                query = query.filter(ResumeEvaluation.evaluated_at >= week_ago)
+            elif date_filter == 'month':
+                month_ago = datetime.utcnow() - timedelta(days=30)
+                query = query.filter(ResumeEvaluation.evaluated_at >= month_ago)
+        
+        evaluations = query.all()
         
         # Sort by final score (highest first)
         evaluations.sort(key=lambda x: x.final_score or 0, reverse=True)
+        
+        # Group by upload session
+        sessions = {}
+        for eval in evaluations:
+            session_id = eval.upload_session_id or 'individual'
+            if session_id not in sessions:
+                sessions[session_id] = {
+                    'evaluations': [],
+                    'session_name': f"Session {session_id[:8]}" if session_id != 'individual' else 'Individual Uploads',
+                    'upload_date': eval.evaluated_at,
+                    'count': 0
+                }
+            sessions[session_id]['evaluations'].append(eval)
+            sessions[session_id]['count'] += 1
         
         # Calculate statistics
         total_evaluations = len(evaluations)
@@ -300,14 +359,28 @@ def bulk_results(jd_id):
         
         avg_score = sum(e.final_score or 0 for e in evaluations) / total_evaluations if total_evaluations > 0 else 0
         
+        # Get available sessions for filtering
+        all_sessions = db.session.query(ResumeEvaluation.upload_session_id, 
+                                      db.func.count(ResumeEvaluation.id).label('count'),
+                                      db.func.max(ResumeEvaluation.evaluated_at).label('last_upload'))\
+                                .filter_by(job_description_id=jd_id)\
+                                .group_by(ResumeEvaluation.upload_session_id)\
+                                .order_by(db.func.max(ResumeEvaluation.evaluated_at).desc())\
+                                .all()
+        
         return render_template('bulk_results.html', 
                              job_description=jd,
                              evaluations=evaluations,
+                             sessions=sessions,
+                             all_sessions=all_sessions,
                              total_evaluations=total_evaluations,
                              high_suitability=high_suitability,
                              medium_suitability=medium_suitability,
                              low_suitability=low_suitability,
-                             avg_score=avg_score)
+                             avg_score=avg_score,
+                             current_session=session_filter,
+                             current_date=date_filter,
+                             show_only_bulk=show_only_bulk)
     except Exception as e:
         flash(f'Error loading bulk results: {str(e)}', 'error')
         return redirect(url_for('main.dashboard'))
