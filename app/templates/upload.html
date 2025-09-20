@@ -2,88 +2,189 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs" id="uploadTabs" role="tablist">
+    <div class="col-12">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">Upload Documents</h1>
+            <p class="lead text-muted">Upload job descriptions and resumes to get AI-powered evaluations</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-white border-0">
+                <ul class="nav nav-pills nav-fill" id="uploadTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="jd-tab" data-bs-toggle="tab" data-bs-target="#jd" type="button" role="tab">
-                            Upload Job Description
+                        <button class="nav-link active fw-semibold" id="jd-tab" data-bs-toggle="tab" data-bs-target="#jd" type="button" role="tab">
+                            <i class="fas fa-briefcase me-2"></i>Job Description
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="resume-tab" data-bs-toggle="tab" data-bs-target="#resume" type="button" role="tab">
-                            Upload Resume
+                        <button class="nav-link fw-semibold" id="resume-tab" data-bs-toggle="tab" data-bs-target="#resume" type="button" role="tab">
+                            <i class="fas fa-user-graduate me-2"></i>Resume
                         </button>
                     </li>
                 </ul>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="tab-content" id="uploadTabsContent">
                     <!-- JD Upload Tab -->
                     <div class="tab-pane fade show active" id="jd" role="tabpanel">
-                        <h5 class="card-title">Upload Job Description</h5>
-                        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload') }}">
+                        <div class="text-center mb-4">
+                            <h4 class="fw-bold text-primary">Upload Job Description</h4>
+                            <p class="text-muted">Upload a job description file to create a new evaluation criteria</p>
+                        </div>
+                        
+                        <form method="POST" enctype="multipart/form-data" id="jdForm">
                             <input type="hidden" name="upload_type" value="jd">
-                            <div class="mb-3">
-                                <label for="jd_file" class="form-label">Job Description File (PDF/DOCX)</label>
-                                <input class="form-control" type="file" id="jd_file" name="jd_file" accept=".pdf,.docx" required>
+                            
+                            <!-- File Upload Area -->
+                            <div class="upload-area mb-4" id="jdUploadArea">
+                                <div class="text-center" id="jdUploadPrompt">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                    <h5 class="fw-bold">Drop your job description here</h5>
+                                    <p class="text-muted mb-3">or click to browse files</p>
+                                    <div class="d-flex justify-content-center">
+                                        <label class="btn btn-outline-primary mb-0" for="jd_file">
+                                            <i class="fas fa-folder-open me-2"></i>Choose File
+                                        </label>
+                                    </div>
+                                </div>
+                                <input class="form-control d-none" type="file" id="jd_file" name="jd_file" accept=".pdf,.docx" required>
+                                <div class="file-info d-none" id="jdFileInfo">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" id="jdFileName"></div>
+                                            <small class="text-muted" id="jdFileSize"></small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearJDFile()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+                            
+                            <!-- Company Details -->
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="company" class="form-label">Company</label>
-                                        <input type="text" class="form-control" id="company" name="company">
+                                        <label for="company" class="form-label fw-semibold">
+                                            <i class="fas fa-building me-1"></i>Company Name
+                                        </label>
+                                        <input type="text" class="form-control" id="company" name="company" placeholder="Enter company name">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="location" class="form-label">Location</label>
-                                        <input type="text" class="form-control" id="location" name="location">
+                                        <label for="location" class="form-label fw-semibold">
+                                            <i class="fas fa-map-marker-alt me-1"></i>Location
+                                        </label>
+                                        <input type="text" class="form-control" id="location" name="location" placeholder="e.g., Hyderabad, Bangalore">
                                     </div>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Upload JD</button>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-upload me-2"></i>Upload Job Description
+                                </button>
+                            </div>
                         </form>
                     </div>
                     
                     <!-- Resume Upload Tab -->
                     <div class="tab-pane fade" id="resume" role="tabpanel">
-                        <h5 class="card-title">Upload Resume</h5>
-                        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload') }}">
+                        <div class="text-center mb-4">
+                            <h4 class="fw-bold text-success">Upload Resume</h4>
+                            <p class="text-muted">Upload a resume to evaluate against existing job descriptions</p>
+                        </div>
+                        
+                        <form method="POST" enctype="multipart/form-data" id="resumeForm">
                             <input type="hidden" name="upload_type" value="resume">
-                            <div class="mb-3">
-                                <label for="jd_id" class="form-label">Select Job Description</label>
+                            
+                            <!-- Job Description Selection -->
+                            <div class="mb-4">
+                                <label for="jd_id" class="form-label fw-semibold">
+                                    <i class="fas fa-briefcase me-1"></i>Select Job Description
+                                </label>
                                 <select class="form-select" id="jd_id" name="jd_id" required>
-                                    <option value="">Choose a job description...</option>
+                                    <option value="">Choose a job description to evaluate against...</option>
                                     {% for jd in job_descriptions %}
-                                    <option value="{{ jd.id }}">{{ jd.title }} - {{ jd.company }}</option>
+                                    <option value="{{ jd.id }}">
+                                        {{ jd.title }} 
+                                        {% if jd.company %} - {{ jd.company }}{% endif %}
+                                        {% if jd.location %} ({{ jd.location }}){% endif %}
+                                    </option>
                                     {% endfor %}
                                 </select>
+                                {% if not job_descriptions %}
+                                <div class="alert alert-warning mt-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    No job descriptions available. Please upload a job description first.
+                                </div>
+                                {% endif %}
                             </div>
-                            <div class="mb-3">
-                                <label for="resume_file" class="form-label">Resume File (PDF/DOCX)</label>
-                                <input class="form-control" type="file" id="resume_file" name="resume_file" accept=".pdf,.docx" required>
+                            
+                            <!-- File Upload Area -->
+                            <div class="upload-area mb-4" id="resumeUploadArea">
+                                <div class="text-center" id="resumeUploadPrompt">
+                                    <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
+                                    <h5 class="fw-bold">Drop your resume here</h5>
+                                    <p class="text-muted mb-3">or click to browse files</p>
+                                    <div class="d-flex justify-content-center">
+                                        <label class="btn btn-outline-success mb-0" for="resume_file">
+                                            <i class="fas fa-folder-open me-2"></i>Choose File
+                                        </label>
+                                    </div>
+                                </div>
+                                <input class="form-control d-none" type="file" id="resume_file" name="resume_file" accept=".pdf,.docx" required>
+                                <div class="file-info d-none" id="resumeFileInfo">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" id="resumeFileName"></div>
+                                            <small class="text-muted" id="resumeFileSize"></small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearResumeFile()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+                            
+                            <!-- Student Details -->
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="student_name" class="form-label">Student Name</label>
-                                        <input type="text" class="form-control" id="student_name" name="student_name">
+                                        <label for="student_name" class="form-label fw-semibold">
+                                            <i class="fas fa-user me-1"></i>Student Name
+                                        </label>
+                                        <input type="text" class="form-control" id="student_name" name="student_name" placeholder="Enter student name">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="student_email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="student_email" name="student_email">
+                                        <label for="student_email" class="form-label fw-semibold">
+                                            <i class="fas fa-envelope me-1"></i>Email Address
+                                        </label>
+                                        <input type="email" class="form-control" id="student_email" name="student_email" placeholder="student@example.com">
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="student_location" class="form-label">Location</label>
-                                <input type="text" class="form-control" id="student_location" name="student_location">
+                            <div class="mb-4">
+                                <label for="student_location" class="form-label fw-semibold">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Location
+                                </label>
+                                <input type="text" class="form-control" id="student_location" name="student_location" placeholder="e.g., Hyderabad, Bangalore">
                             </div>
-                            <button type="submit" class="btn btn-primary">Upload Resume</button>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success btn-lg" {% if not job_descriptions %}disabled{% endif %}>
+                                    <i class="fas fa-upload me-2"></i>Upload Resume & Evaluate
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -91,9 +192,43 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Help Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card border-0 bg-light help-card">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-question-circle text-primary me-2"></i>Need Help?
+                </h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold">Supported Formats</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li><i class="fas fa-check text-success me-2"></i>PDF files (.pdf)</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Word documents (.docx)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold">File Size Limit</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li><i class="fas fa-info-circle text-info me-2"></i>Maximum 10MB per file</li>
+                            <li><i class="fas fa-info-circle text-info me-2"></i>Clear, readable text preferred</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold">Processing Time</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li><i class="fas fa-clock text-warning me-2"></i>Usually 30-60 seconds</li>
+                            <li><i class="fas fa-clock text-warning me-2"></i>Complex files may take longer</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // Activate the correct tab based on potential errors
     document.addEventListener('DOMContentLoaded', function() {
@@ -103,6 +238,102 @@
             const resumeTab = new bootstrap.Tab(document.getElementById('resume-tab'));
             resumeTab.show();
         }
+        
+        // Initialize file upload handlers
+        initializeFileUpload();
     });
+    
+    function initializeFileUpload() {
+        // JD File Upload
+        const jdFileInput = document.getElementById('jd_file');
+        const jdUploadArea = document.getElementById('jdUploadArea');
+        const jdFileInfo = document.getElementById('jdFileInfo');
+        const jdUploadPrompt = document.getElementById('jdUploadPrompt');
+        
+        jdFileInput.addEventListener('change', function(e) {
+            handleFileSelect(e, 'jd');
+        });
+        
+        // Resume File Upload
+        const resumeFileInput = document.getElementById('resume_file');
+        const resumeUploadArea = document.getElementById('resumeUploadArea');
+        const resumeFileInfo = document.getElementById('resumeFileInfo');
+        const resumeUploadPrompt = document.getElementById('resumeUploadPrompt');
+        
+        resumeFileInput.addEventListener('change', function(e) {
+            handleFileSelect(e, 'resume');
+        });
+        
+        // Add drag and drop functionality
+        setupDragAndDrop('jdUploadArea', jdFileInput, 'jd');
+        setupDragAndDrop('resumeUploadArea', resumeFileInput, 'resume');
+    }
+    
+    function setupDragAndDrop(areaId, fileInput, type) {
+        const area = document.getElementById(areaId);
+        
+        area.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            area.classList.add('bg-light');
+        });
+        
+        area.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            area.classList.remove('bg-light');
+        });
+        
+        area.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            area.classList.remove('bg-light');
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect({target: fileInput}, type);
+            }
+        });
+    }
+    
+    function handleFileSelect(event, type) {
+        const file = event.target.files[0];
+        if (file) {
+            const fileName = file.name;
+            const fileSize = formatFileSize(file.size);
+            
+            if (type === 'jd') {
+                document.getElementById('jdFileName').textContent = fileName;
+                document.getElementById('jdFileSize').textContent = fileSize;
+                document.getElementById('jdFileInfo').classList.remove('d-none');
+                document.getElementById('jdUploadPrompt').style.display = 'none';
+            } else {
+                document.getElementById('resumeFileName').textContent = fileName;
+                document.getElementById('resumeFileSize').textContent = fileSize;
+                document.getElementById('resumeFileInfo').classList.remove('d-none');
+                document.getElementById('resumeUploadPrompt').style.display = 'none';
+            }
+        }
+    }
+    
+    function clearJDFile() {
+        document.getElementById('jd_file').value = '';
+        document.getElementById('jdFileInfo').classList.add('d-none');
+        document.getElementById('jdUploadPrompt').style.display = 'block';
+    }
+    
+    function clearResumeFile() {
+        document.getElementById('resume_file').value = '';
+        document.getElementById('resumeFileInfo').classList.add('d-none');
+        document.getElementById('resumeUploadPrompt').style.display = 'block';
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 </script>
 {% endblock %}

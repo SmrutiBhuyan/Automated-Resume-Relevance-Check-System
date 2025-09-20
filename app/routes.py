@@ -24,9 +24,13 @@ def index():
 
 @main_bp.route('/upload', methods=['GET', 'POST'])
 def upload():
+    job_descriptions = JobDescription.query.all()
+    
     if request.method == 'POST':
+        upload_type = request.form.get('upload_type')
+        
         # Handle JD upload
-        if 'jd_file' in request.files:
+        if upload_type == 'jd' and 'jd_file' in request.files:
             jd_file = request.files['jd_file']
             if jd_file and allowed_file(jd_file.filename):
                 # Save JD file
@@ -37,6 +41,10 @@ def upload():
                 
                 # Extract text and parse JD
                 jd_text = FileProcessor.extract_text(file_path)
+                if not jd_text:
+                    flash('Could not extract text from the job description file.', 'error')
+                    return render_template('upload.html', job_descriptions=job_descriptions)
+                
                 jd_parser = JDParser()
                 jd_data = jd_parser.parse_job_description(jd_text)
                 
@@ -54,14 +62,18 @@ def upload():
                 db.session.commit()
                 
                 flash('Job description uploaded successfully!', 'success')
-                return redirect(url_for('main.dashboard'))
+                return redirect(url_for('main.upload'))
         
         # Handle resume upload
-        elif 'resume_file' in request.files:
+        elif upload_type == 'resume' and 'resume_file' in request.files:
             resume_file = request.files['resume_file']
             jd_id = request.form.get('jd_id')
             
-            if resume_file and allowed_file(resume_file.filename) and jd_id:
+            if not jd_id:
+                flash('Please select a job description.', 'error')
+                return render_template('upload.html', job_descriptions=job_descriptions)
+            
+            if resume_file and allowed_file(resume_file.filename):
                 # Save resume file
                 filename = secure_filename(resume_file.filename)
                 file_path = os.path.join(UPLOAD_FOLDER, f"resume_{uuid.uuid4()}_{filename}")
@@ -70,6 +82,10 @@ def upload():
                 
                 # Extract text and parse resume
                 resume_text = FileProcessor.extract_text(file_path)
+                if not resume_text:
+                    flash('Could not extract text from the resume file.', 'error')
+                    return render_template('upload.html', job_descriptions=job_descriptions)
+                
                 resume_parser = ResumeParser()
                 resume_data = resume_parser.parse_resume(resume_text)
                 
@@ -92,6 +108,10 @@ def upload():
                 
                 # Get JD data
                 jd = JobDescription.query.get(jd_id)
+                if not jd:
+                    flash('Selected job description not found.', 'error')
+                    return render_template('upload.html', job_descriptions=job_descriptions)
+                
                 jd_data = {
                     'must_have_skills': jd.must_have_skills or [],
                     'good_to_have_skills': jd.good_to_have_skills or [],
@@ -100,31 +120,37 @@ def upload():
                 }
                 
                 # Evaluate resume
-                evaluation_service = EvaluationService()
-                evaluation_result = evaluation_service.evaluate_resume(resume_data, jd_data)
-                
-                # Save evaluation
-                evaluation = ResumeEvaluation(
-                    job_description_id=jd_id,
-                    resume_id=resume.id,
-                    keyword_score=evaluation_result['keyword_score'],
-                    semantic_score=evaluation_result['semantic_score'],
-                    final_score=evaluation_result['final_score'],
-                    verdict=evaluation_result['verdict'],
-                    missing_skills=evaluation_result['missing_elements']['missing_skills'],
-                    missing_certifications=[],
-                    missing_education=evaluation_result['missing_elements']['missing_qualifications'],
-                    missing_projects=[],
-                    improvement_feedback=evaluation_result['improvement_feedback']
-                )
-                db.session.add(evaluation)
-                db.session.commit()
-                
-                flash('Resume uploaded and evaluated successfully!', 'success')
-                return redirect(url_for('main.results', evaluation_id=evaluation.id))
+                try:
+                    evaluation_service = EvaluationService()
+                    evaluation_result = evaluation_service.evaluate_resume(resume_data, jd_data)
+                    
+                    # Save evaluation
+                    evaluation = ResumeEvaluation(
+                        job_description_id=jd_id,
+                        resume_id=resume.id,
+                        keyword_score=evaluation_result['keyword_score'],
+                        semantic_score=evaluation_result['semantic_score'],
+                        final_score=evaluation_result['final_score'],
+                        verdict=evaluation_result['verdict'],
+                        missing_skills=evaluation_result['missing_elements']['missing_skills'],
+                        missing_certifications=[],
+                        missing_education=evaluation_result['missing_elements']['missing_qualifications'],
+                        missing_projects=[],
+                        improvement_feedback=evaluation_result['improvement_feedback']
+                    )
+                    db.session.add(evaluation)
+                    db.session.commit()
+                    
+                    flash('Resume uploaded and evaluated successfully!', 'success')
+                    return redirect(url_for('main.results', evaluation_id=evaluation.id))
+                    
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Error during evaluation: {str(e)}', 'error')
+                    return render_template('upload.html', job_descriptions=job_descriptions)
+            else:
+                flash('Please select a valid resume file.', 'error')
     
-    # Get all job descriptions for dropdown
-    job_descriptions = JobDescription.query.all()
     return render_template('upload.html', job_descriptions=job_descriptions)
 
 @main_bp.route('/dashboard')
@@ -135,8 +161,12 @@ def dashboard():
 
 @main_bp.route('/results/<int:evaluation_id>')
 def results(evaluation_id):
-    evaluation = ResumeEvaluation.query.get_or_404(evaluation_id)
-    return render_template('results.html', evaluation=evaluation)
+    try:
+        evaluation = ResumeEvaluation.query.get_or_404(evaluation_id)
+        return render_template('results.html', evaluation=evaluation)
+    except Exception as e:
+        flash(f'Error loading evaluation results: {str(e)}', 'error')
+        return redirect(url_for('main.dashboard'))
 
 @main_bp.route('/api/evaluate', methods=['POST'])
 def api_evaluate():
