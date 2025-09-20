@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Bulk Evaluation Results</h2>
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Job Description Info -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Job Description</h5>
+      </div>
+      <div class="card-body">
+        <h6>{{ job_description.title }}</h6>
+        <p><strong>Company:</strong> {{ job_description.company or 'N/A' }}</p>
+        <p><strong>Location:</strong> {{ job_description.location or 'N/A' }}</p>
+        <p><strong>Must Have Skills:</strong> {{ (job_description.must_have_skills or [])|join(', ') }}</p>
+        <p><strong>Qualifications:</strong> {{ (job_description.qualifications or [])|join(', ') }}</p>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h3 class="text-primary">{{ total_evaluations }}</h3>
+            <p class="card-text">Total Resumes</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h3 class="text-success">{{ high_suitability }}</h3>
+            <p class="card-text">High Suitability</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h3 class="text-warning">{{ medium_suitability }}</h3>
+            <p class="card-text">Medium Suitability</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h3 class="text-danger">{{ low_suitability }}</h3>
+            <p class="card-text">Low Suitability</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Average Score -->
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <h5 class="card-title">Average Relevance Score</h5>
+        <div class="display-4 
+          {% if avg_score >= 80 %}score-high
+          {% elif avg_score >= 60 %}score-medium
+          {% else %}score-low
+          {% endif %}">
+          {{ "%.1f"|format(avg_score) }}%
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Evaluation Results</h5>
+      </div>
+      <div class="card-body">
+        {% if evaluations %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Resume</th>
+                <th>Final Score</th>
+                <th>Verdict</th>
+                <th>Keyword Score</th>
+                <th>Semantic Score</th>
+                <th>Missing Skills</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for evaluation in evaluations %}
+              <tr>
+                <td>
+                  <span class="badge bg-primary">{{ loop.index }}</span>
+                </td>
+                <td>
+                  <div>
+                    <strong>{{ evaluation.resume.original_filename }}</strong>
+                    {% if evaluation.resume.student_name and evaluation.resume.student_name != "Bulk Upload - " + evaluation.resume.original_filename %}
+                    <br><small class="text-muted">{{ evaluation.resume.student_name }}</small>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold
+                    {% if evaluation.final_score >= 80 %}text-success
+                    {% elif evaluation.final_score >= 60 %}text-warning
+                    {% else %}text-danger
+                    {% endif %}">
+                    {{ "%.1f"|format(evaluation.final_score or 0) }}%
+                  </span>
+                </td>
+                <td>
+                  <span class="badge 
+                    {% if evaluation.verdict == 'High' %}bg-success
+                    {% elif evaluation.verdict == 'Medium' %}bg-warning
+                    {% else %}bg-danger
+                    {% endif %}">
+                    {{ evaluation.verdict }}
+                  </span>
+                </td>
+                <td>{{ "%.1f"|format(evaluation.keyword_score or 0) }}%</td>
+                <td>{{ "%.1f"|format(evaluation.semantic_score or 0) }}%</td>
+                <td>
+                  {% if evaluation.missing_skills %}
+                    <span class="text-danger">{{ evaluation.missing_skills|length }} missing</span>
+                  {% else %}
+                    <span class="text-success">None</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('main.results', evaluation_id=evaluation.id) }}" 
+                     class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye"></i> View Details
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No evaluations found</h5>
+          <p class="text-muted">Upload some resumes to see evaluation results here.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Export Options -->
+    {% if evaluations %}
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Export Options</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <button class="btn btn-success" onclick="exportToCSV()">
+              <i class="fas fa-file-csv me-2"></i>Export to CSV
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-primary" onclick="exportToPDF()">
+              <i class="fas fa-file-pdf me-2"></i>Export to PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function exportToCSV() {
+    // Create CSV content
+    let csvContent = "Rank,Resume,Final Score,Verdict,Keyword Score,Semantic Score,Missing Skills Count\n";
+    
+    {% for evaluation in evaluations %}
+    csvContent += "{{ loop.index }},{{ evaluation.resume.original_filename }},{{ "%.1f"|format(evaluation.final_score or 0) }}%,{{ evaluation.verdict }},{{ "%.1f"|format(evaluation.keyword_score or 0) }}%,{{ "%.1f"|format(evaluation.semantic_score or 0) }}%,{{ evaluation.missing_skills|length }}\n";
+    {% endfor %}
+    
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bulk_evaluation_results.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function exportToPDF() {
+    // Simple PDF export using window.print
+    window.print();
+}
+</script>
+{% endblock %}

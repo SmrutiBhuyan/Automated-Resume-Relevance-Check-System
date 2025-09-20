@@ -22,7 +22,12 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link fw-semibold" id="resume-tab" data-bs-toggle="tab" data-bs-target="#resume" type="button" role="tab">
-                            <i class="fas fa-user-graduate me-2"></i>Resume
+                            <i class="fas fa-user-graduate me-2"></i>Single Resume
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk" type="button" role="tab">
+                            <i class="fas fa-users me-2"></i>Bulk Upload
                         </button>
                     </li>
                 </ul>
@@ -187,6 +192,93 @@
                             </div>
                         </form>
                     </div>
+                    
+                    <!-- Bulk Upload Tab -->
+                    <div class="tab-pane fade" id="bulk" role="tabpanel">
+                        <div class="text-center mb-4">
+                            <h4 class="fw-bold text-info">Bulk Resume Upload</h4>
+                            <p class="text-muted">Upload multiple resumes to evaluate against a job description</p>
+                        </div>
+                        
+                        <form method="POST" enctype="multipart/form-data" id="bulkForm">
+                            <input type="hidden" name="upload_type" value="bulk">
+                            
+                            <!-- Job Description Selection -->
+                            <div class="mb-4">
+                                <label for="bulk_jd_id" class="form-label fw-semibold">
+                                    <i class="fas fa-briefcase me-1"></i>Select Job Description
+                                </label>
+                                <select class="form-select" id="bulk_jd_id" name="jd_id" required>
+                                    <option value="">Choose a job description to evaluate against...</option>
+                                    {% for jd in job_descriptions %}
+                                    <option value="{{ jd.id }}">
+                                        {{ jd.title }} 
+                                        {% if jd.company %} - {{ jd.company }}{% endif %}
+                                        {% if jd.location %} ({{ jd.location }}){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if not job_descriptions %}
+                                <div class="alert alert-warning mt-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    No job descriptions available. Please upload a job description first.
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Multiple File Upload Area -->
+                            <div class="upload-area mb-4" id="bulkUploadArea">
+                                <div class="text-center" id="bulkUploadPrompt">
+                                    <i class="fas fa-file-upload fa-3x text-info mb-3"></i>
+                                    <h5 class="fw-bold">Drop multiple resumes here</h5>
+                                    <p class="text-muted mb-3">or click to browse files (PDF/DOCX)</p>
+                                    <div class="d-flex justify-content-center">
+                                        <label class="btn btn-outline-info mb-0" for="bulk_files">
+                                            <i class="fas fa-folder-open me-2"></i>Choose Files
+                                        </label>
+                                    </div>
+                                </div>
+                                <input class="form-control d-none" type="file" id="bulk_files" name="resume_files" accept=".pdf,.docx" multiple required>
+                                <div class="file-info d-none" id="bulkFileInfo">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" id="bulkFileCount">0 files selected</div>
+                                            <small class="text-muted" id="bulkFileList"></small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearBulkFiles()">
+                                            <i class="fas fa-times"></i> Clear All
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Bulk Upload Options -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="auto_evaluate" name="auto_evaluate" checked>
+                                        <label class="form-check-label" for="auto_evaluate">
+                                            <i class="fas fa-magic me-1"></i>Auto-evaluate all resumes
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generate_report" name="generate_report" checked>
+                                        <label class="form-check-label" for="generate_report">
+                                            <i class="fas fa-chart-bar me-1"></i>Generate comparison report
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-info btn-lg" {% if not job_descriptions %}disabled{% endif %}>
+                                    <i class="fas fa-upload me-2"></i>Upload & Evaluate All Resumes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -264,9 +356,20 @@
             handleFileSelect(e, 'resume');
         });
         
+        // Bulk File Upload
+        const bulkFileInput = document.getElementById('bulk_files');
+        const bulkUploadArea = document.getElementById('bulkUploadArea');
+        const bulkFileInfo = document.getElementById('bulkFileInfo');
+        const bulkUploadPrompt = document.getElementById('bulkUploadPrompt');
+        
+        bulkFileInput.addEventListener('change', function(e) {
+            handleBulkFileSelect(e);
+        });
+        
         // Add drag and drop functionality
         setupDragAndDrop('jdUploadArea', jdFileInput, 'jd');
         setupDragAndDrop('resumeUploadArea', resumeFileInput, 'resume');
+        setupDragAndDrop('bulkUploadArea', bulkFileInput, 'bulk');
     }
     
     function setupDragAndDrop(areaId, fileInput, type) {
@@ -291,7 +394,11 @@
             
             if (e.dataTransfer.files.length) {
                 fileInput.files = e.dataTransfer.files;
-                handleFileSelect({target: fileInput}, type);
+                if (type === 'bulk') {
+                    handleBulkFileSelect({target: fileInput});
+                } else {
+                    handleFileSelect({target: fileInput}, type);
+                }
             }
         });
     }
@@ -326,6 +433,25 @@
         document.getElementById('resume_file').value = '';
         document.getElementById('resumeFileInfo').classList.add('d-none');
         document.getElementById('resumeUploadPrompt').style.display = 'block';
+    }
+    
+    function handleBulkFileSelect(event) {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            const fileCount = files.length;
+            const fileNames = Array.from(files).map(file => file.name).join(', ');
+            
+            document.getElementById('bulkFileCount').textContent = `${fileCount} file${fileCount > 1 ? 's' : ''} selected`;
+            document.getElementById('bulkFileList').textContent = fileNames;
+            document.getElementById('bulkFileInfo').classList.remove('d-none');
+            document.getElementById('bulkUploadPrompt').style.display = 'none';
+        }
+    }
+    
+    function clearBulkFiles() {
+        document.getElementById('bulk_files').value = '';
+        document.getElementById('bulkFileInfo').classList.add('d-none');
+        document.getElementById('bulkUploadPrompt').style.display = 'block';
     }
     
     function formatFileSize(bytes) {
