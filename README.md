@@ -11,15 +11,15 @@ At **Innomatics Research Labs**, resume evaluation is currently manual, inconsis
 - **Fast and high-quality shortlists** expected by hiring companies
 
 ### System Objectives:
-- ✅ **Automate resume evaluation** against job requirements at scale
-- ✅ **Generate Relevance Score (0–100)** for each resume per job role
-- ✅ **Highlight gaps** such as missing skills, certifications, or projects
-- ✅ **Provide fit verdict** (High / Medium / Low suitability) to recruiters
-- ✅ **Offer personalized improvement feedback** to students
-- ✅ **Store evaluations** in a web-based dashboard accessible to the placement team
-- ✅ **Handle thousands of resumes weekly** with robust, scalable, flexible architecture
+-  **Automate resume evaluation** against job requirements at scale
+-  **Generate Relevance Score (0–100)** for each resume per job role
+-  **Highlight gaps** such as missing skills, certifications, or projects
+-  **Provide fit verdict** (High / Medium / Low suitability) to recruiters
+-  **Offer personalized improvement feedback** to students
+-  **Store evaluations** in a web-based dashboard accessible to the placement team
+-  **Handle thousands of resumes weekly** with robust, scalable, flexible architecture
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ### Proposed Solution
 The system implements an **AI-powered resume evaluation engine** that combines rule-based checks with LLM-based semantic understanding:
@@ -47,9 +47,9 @@ Job Description Upload → Resume Upload → Evaluation Pipeline → Results Das
 7. **Output Generation** – Scores, missing elements, verdict, feedback
 8. **Storage & Access** – Results stored in searchable dashboard
 
-## 🛠️ Technology Stack
+## Technology Stack
 
-### ✅ **Implemented Technologies**
+### **Implemented Technologies**
 
 #### **Core AI Framework & Scoring**
 - **Python** - Primary programming language ✅
@@ -87,9 +87,7 @@ Job Description Upload → Resume Upload → Evaluation Pipeline → Results Das
 - **Streamlit** - Alternative frontend (not used, using Flask instead)
 - **FAISS/Pinecone** - Alternative vector stores (ChromaDB prioritized)
 
-## 📊 System Features
-
-### ✅ **Fully Implemented Features**
+##  System Features
 
 1. **Resume & Job Description Parsing**
    - PDF and DOCX text extraction
@@ -144,12 +142,12 @@ Job Description Upload → Resume Upload → Evaluation Pipeline → Results Das
 
 ### Prerequisites
 - **Python 3.9+**
-- **PostgreSQL** (or SQLite for development)
-- **OpenAI API Key** (optional, for advanced features)
+- **PostgreSQL** 
+- **OpenAI API Key** 
 
 ### Step 1: Clone Repository
 ```bash
-git clone https://github.com/your-username/Resume-Relevance-automated-system.git
+git clone https://github.com/SmrutiBhuyan/Automated-Resume-Relevance-Check-System.git
 cd Resume-Relevance-automated-system
 ```
 
@@ -191,14 +189,9 @@ FLASK_DEBUG=True
 
 # Database Configuration
 DB_URL=postgresql://username:password@localhost/database_name
-# For SQLite: sqlite:///instance/database.db
 
-# OpenAI Configuration (optional)
+# OpenAI Configuration
 OPENAI_API_KEY=your-openai-api-key-here
-
-# LangSmith Configuration (optional)
-LANGSMITH_API_KEY=your-langsmith-api-key-here
-LANGSMITH_PROJECT=resume-evaluation-system
 
 # ChromaDB Configuration
 CHROMA_PERSIST_DIRECTORY=./chroma_db
@@ -283,7 +276,7 @@ url = "http://localhost:5000/api/evaluate"
 
 # Request payload
 payload = {
-    "resume_text": "John Doe\nSoftware Engineer\nSkills: Python, Machine Learning...",
+    "resume_text": "Akash Awasthi\nSoftware Engineer\nSkills: Python, Machine Learning...",
     "jd_text": "Software Engineer\nMust-have: Python, AI/ML\nGood-to-have: Cloud..."
 }
 
@@ -348,8 +341,6 @@ response = requests.post(url, json=payload)
 - API input validation
 
 ## 🔧 Troubleshooting
-
-### Common Issues
 
 #### 1. **ChromaDB SQLite Version Error**
 ```
@@ -447,12 +438,5 @@ This project is developed for **Innomatics Research Labs** as part of the automa
 
 ---
 
-## 📞 Support
-
-For technical support or questions about the system:
-- Check the troubleshooting section above
-- Review system logs for error details
-- Ensure all dependencies are properly installed
-- Verify database connectivity and migrations
 
 **System Status**: ✅ **Production Ready** - All core features operational with comprehensive fallback mechanisms.

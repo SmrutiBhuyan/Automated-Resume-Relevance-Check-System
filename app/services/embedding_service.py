@@ -43,8 +43,16 @@ class EmbeddingService:
         self.model = None
         try:
             from sentence_transformers import SentenceTransformer
-            self.model = SentenceTransformer('all-MiniLM-L6-v2')
-            self.logger.info("Sentence transformer model loaded successfully")
+            import os
+            
+            # Try to use HuggingFace API key if available
+            hf_token = os.getenv('HUGGINGFACE_API_KEY') or os.getenv('HUGGINGFACE_TOKEN')
+            if hf_token:
+                self.model = SentenceTransformer('all-MiniLM-L6-v2', use_auth_token=hf_token)
+                self.logger.info("Sentence transformer model loaded successfully with HuggingFace API key")
+            else:
+                self.model = SentenceTransformer('all-MiniLM-L6-v2')
+                self.logger.info("Sentence transformer model loaded successfully")
         except Exception as e:
             self.logger.warning(f"Could not load sentence transformer: {e}")
             self.logger.info("Falling back to TF-IDF similarity")
