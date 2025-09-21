@@ -198,7 +198,6 @@ CHROMA_PERSIST_DIRECTORY=./chroma_db
 ```
 
 ### Step 6: Database Setup
-
 #### For PostgreSQL:
 ```bash
 # Run PostgreSQL migration
@@ -315,24 +314,6 @@ response = requests.post(url, json=payload)
 - **API Endpoints**: ✅ All operational
 - **Test Suite**: ✅ 5/5 tests passing
 
-### 🔄 **Fallback Modes**
-- **ChromaDB**: Using TF-IDF fallback (SQLite version compatibility)
-- **OpenAI**: Using basic feedback generation (API quota/billing)
-- **Sentence Transformers**: Using TF-IDF similarity (HuggingFace Hub issues)
-
-### 📊 **Performance Metrics**
-- **Evaluation Speed**: ~2-5 seconds per resume
-- **Bulk Processing**: Handles 100+ resumes per batch
-- **Accuracy**: Multi-dimensional scoring with 3 evaluation criteria
-- **Scalability**: PostgreSQL backend supports thousands of evaluations
-
-## 🛡️ Error Handling & Robustness
-
-### Graceful Degradation
-- **ChromaDB Issues**: Falls back to TF-IDF similarity
-- **OpenAI API Issues**: Uses rule-based feedback generation
-- **Sentence Transformer Issues**: Uses basic text similarity
-- **Database Issues**: Comprehensive error logging and recovery
 
 ### Data Validation
 - File format validation (PDF/DOCX only)
@@ -428,7 +409,7 @@ python -m pytest tests/test_evaluation.py
 
 This project is developed for **Innomatics Research Labs** as part of the automated resume evaluation system initiative.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - **Innomatics Research Labs** for the problem statement and requirements
 - **OpenAI** for GPT model integration

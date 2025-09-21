@@ -4,6 +4,13 @@ import os
 from typing import List, Tuple, Dict, Any
 import logging
 
+# Apply SQLite patch for ChromaDB compatibility
+try:
+    import sqlite_patch
+    print("✅ SQLite patch applied for ChromaDB compatibility")
+except ImportError:
+    print("⚠️  SQLite patch not found, ChromaDB may not work properly")
+
 class EmbeddingService:
     def __init__(self):
         """Initialize the embedding service with fallback options"""
@@ -16,22 +23,16 @@ class EmbeddingService:
         
         try:
             import chromadb
-            from chromadb.config import Settings
             
-            # Initialize ChromaDB
-            self.chroma_client = chromadb.Client(Settings(
-                chroma_db_impl="duckdb+parquet",
-                persist_directory="./chroma_db"
-            ))
+            # Initialize ChromaDB with new API
+            self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
             
             # Create collections for resumes and job descriptions
             self.resume_collection = self.chroma_client.get_or_create_collection(
-                name="resumes",
-                metadata={"hnsw:space": "cosine"}
+                name="resumes"
             )
             self.jd_collection = self.chroma_client.get_or_create_collection(
-                name="job_descriptions", 
-                metadata={"hnsw:space": "cosine"}
+                name="job_descriptions"
             )
             self.logger.info("ChromaDB initialized successfully")
             
