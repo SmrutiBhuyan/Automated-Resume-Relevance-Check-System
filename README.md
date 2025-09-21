@@ -309,34 +309,6 @@ response = requests.post(url, json=payload)
 - Database constraint validation
 - API input validation
 
-## 🔧 Troubleshooting
-
-#### 1. **ChromaDB SQLite Version Error**
-```
-RuntimeError: Your system has an unsupported version of sqlite3. Chroma requires sqlite3 >= 3.35.0
-```
-**Solution**: System automatically falls back to TF-IDF similarity. No action required.
-
-#### 2. **OpenAI API Quota Exceeded**
-```
-Error code: 429 - You exceeded your current quota
-```
-**Solution**: System uses basic feedback generation. Add valid API key to enable advanced features.
-
-#### 3. **Database Connection Issues**
-```
-psycopg2.errors.UndefinedColumn
-```
-**Solution**: Run appropriate migration script:
-- PostgreSQL: `python migrate_postgresql.py`
-- SQLite: `python migrate_database.py`
-
-#### 4. **Port Already in Use**
-```
-Address already in use
-```
-**Solution**: Change port in `run.py` or kill existing process.
-
 ## 📁 Project Structure
 
 ```
