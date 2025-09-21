@@ -1,12 +1,44 @@
 from typing import Dict, Tuple
 from app.services.embedding_service import EmbeddingService
+from app.services.evaluation_pipeline import EvaluationPipeline
+from app.services.ats_compatibility_service import ATSCompatibilityChecker
 
 class EvaluationService:
     def __init__(self):
         self.embedding_service = EmbeddingService()
+        self.evaluation_pipeline = EvaluationPipeline()
+        self.ats_checker = ATSCompatibilityChecker()
     
     def evaluate_resume(self, resume_data: Dict, jd_data: Dict) -> Dict:
-        """Evaluate resume against job description"""
+        """Evaluate resume against job description using the advanced pipeline"""
+        try:
+            # Use the new evaluation pipeline
+            result = self.evaluation_pipeline.evaluate_resume(resume_data, jd_data)
+            
+            # Store embeddings for future similarity searches
+            resume_id = f"resume_{hash(resume_data.get('extracted_text', ''))}"
+            jd_id = f"jd_{hash(jd_data.get('description', ''))}"
+            
+            self.embedding_service.store_resume_embedding(
+                resume_id, 
+                resume_data.get('extracted_text', ''),
+                {'skills': resume_data.get('skills', [])}
+            )
+            
+            self.embedding_service.store_jd_embedding(
+                jd_id,
+                jd_data.get('description', ''),
+                {'title': jd_data.get('title', ''), 'skills': jd_data.get('must_have_skills', [])}
+            )
+            
+            return result
+            
+        except Exception as e:
+            # Fallback to basic evaluation
+            return self._basic_evaluation(resume_data, jd_data)
+    
+    def _basic_evaluation(self, resume_data: Dict, jd_data: Dict) -> Dict:
+        """Fallback basic evaluation"""
         # Calculate keyword match score
         keyword_score = self._calculate_keyword_score(resume_data, jd_data)
         
@@ -31,10 +63,13 @@ class EvaluationService:
         return {
             'keyword_score': keyword_score,
             'semantic_score': semantic_score,
+            'ats_score': 0.0,
             'final_score': final_score,
             'verdict': verdict,
             'missing_elements': missing_elements,
-            'improvement_feedback': feedback
+            'improvement_feedback': feedback,
+            'strengths': [],
+            'ats_feedback': []
         }
     
     def _calculate_keyword_score(self, resume_data: Dict, jd_data: Dict) -> float:

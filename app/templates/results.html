@@ -52,7 +52,7 @@
                 </div>
               </div>
             </div>
-            <div class="mb-0">
+            <div class="mb-3">
               <label class="form-label">Semantic Similarity Score</label>
               <div class="progress mb-2">
                 <div class="progress-bar" role="progressbar"
@@ -63,6 +63,19 @@
                 </div>
               </div>
             </div>
+            {% if evaluation.ats_score %}
+            <div class="mb-0">
+              <label class="form-label">ATS Compatibility Score</label>
+              <div class="progress mb-2">
+                <div class="progress-bar" role="progressbar"
+                  data-width="{{ (evaluation.ats_score or 0)|int }}"
+                  aria-valuenow="{{ (evaluation.ats_score or 0)|int }}"
+                  aria-valuemin="0" aria-valuemax="100">
+                  {{ "%.1f"|format(evaluation.ats_score or 0) }}%
+                </div>
+              </div>
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -108,14 +121,62 @@
       </div>
     </div>
 
+    <!-- Strengths and Feedback -->
+    <div class="row">
+      <!-- Resume Strengths -->
+      {% if evaluation.strengths %}
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-star text-warning me-2"></i>Resume Strengths
+            </h5>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              {% for strength in evaluation.strengths %}
+              <li class="list-group-item">
+                <i class="fas fa-check-circle text-success me-2"></i>{{ strength }}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ATS Optimization Tips -->
+      {% if evaluation.ats_feedback %}
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-robot text-info me-2"></i>ATS Optimization Tips
+            </h5>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              {% for tip in evaluation.ats_feedback %}
+              <li class="list-group-item">
+                <i class="fas fa-tools text-primary me-2"></i>{{ tip }}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
     <!-- Improvement Feedback -->
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Improvement Feedback</h5>
+        <h5 class="card-title mb-0">
+          <i class="fas fa-lightbulb text-warning me-2"></i>Improvement Feedback
+        </h5>
       </div>
       <div class="card-body">
         <div class="alert alert-info">
-          <i class="fas fa-lightbulb me-2"></i>
           {{ evaluation.improvement_feedback }}
         </div>
       </div>

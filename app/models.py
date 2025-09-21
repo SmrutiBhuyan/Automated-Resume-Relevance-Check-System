@@ -47,6 +47,7 @@ class ResumeEvaluation(db.Model):
     # Scores
     keyword_score = db.Column(db.Float)
     semantic_score = db.Column(db.Float)
+    ats_score = db.Column(db.Float)  # New ATS compatibility score
     final_score = db.Column(db.Float)
     
     # Verdict
@@ -58,8 +59,10 @@ class ResumeEvaluation(db.Model):
     missing_education = db.Column(db.JSON)
     missing_projects = db.Column(db.JSON)
     
-    # Feedback
+    # Enhanced feedback
     improvement_feedback = db.Column(db.Text)
+    strengths = db.Column(db.JSON)  # List of identified strengths
+    ats_feedback = db.Column(db.JSON)  # ATS optimization tips
     
     # Metadata
     evaluated_at = db.Column(db.DateTime, default=datetime.utcnow)

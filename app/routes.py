@@ -130,13 +130,16 @@ def upload():
                         resume_id=resume.id,
                         keyword_score=evaluation_result['keyword_score'],
                         semantic_score=evaluation_result['semantic_score'],
+                        ats_score=evaluation_result.get('ats_score', 0.0),
                         final_score=evaluation_result['final_score'],
                         verdict=evaluation_result['verdict'],
                         missing_skills=evaluation_result['missing_elements']['missing_skills'],
                         missing_certifications=[],
                         missing_education=evaluation_result['missing_elements']['missing_qualifications'],
                         missing_projects=[],
-                        improvement_feedback=evaluation_result['improvement_feedback']
+                        improvement_feedback=evaluation_result['improvement_feedback'],
+                        strengths=evaluation_result.get('strengths', []),
+                        ats_feedback=evaluation_result.get('ats_feedback', [])
                     )
                     db.session.add(evaluation)
                     db.session.commit()
@@ -247,6 +250,7 @@ def upload():
                                 resume_id=resume.id,
                                 keyword_score=evaluation_result['keyword_score'],
                                 semantic_score=evaluation_result['semantic_score'],
+                                ats_score=evaluation_result.get('ats_score', 0.0),
                                 final_score=evaluation_result['final_score'],
                                 verdict=evaluation_result['verdict'],
                                 missing_skills=evaluation_result['missing_elements']['missing_skills'],
@@ -254,6 +258,8 @@ def upload():
                                 missing_education=evaluation_result['missing_elements']['missing_qualifications'],
                                 missing_projects=[],
                                 improvement_feedback=evaluation_result['improvement_feedback'],
+                                strengths=evaluation_result.get('strengths', []),
+                                ats_feedback=evaluation_result.get('ats_feedback', []),
                                 upload_session_id=upload_session_id,
                                 is_bulk_upload=True
                             )
@@ -407,6 +413,58 @@ def api_evaluate():
         result = evaluation_service.evaluate_resume(resume_data, jd_data)
         
         return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/api/similar-resumes', methods=['POST'])
+def api_similar_resumes():
+    """Find similar resumes for a job description using vector search"""
+    try:
+        data = request.json
+        jd_text = data.get('jd_text')
+        n_results = data.get('n_results', 10)
+        
+        if not jd_text:
+            return jsonify({'error': 'Job description text is required'}), 400
+        
+        # Use embedding service to find similar resumes
+        from app.services.embedding_service import EmbeddingService
+        embedding_service = EmbeddingService()
+        
+        similar_resumes = embedding_service.find_similar_resumes(jd_text, n_results)
+        
+        return jsonify({
+            'similar_resumes': similar_resumes,
+            'count': len(similar_resumes.get('ids', [[]])[0]) if similar_resumes else 0
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/api/ats-check', methods=['POST'])
+def api_ats_check():
+    """Check ATS compatibility of a resume"""
+    try:
+        data = request.json
+        resume_text = data.get('resume_text')
+        resume_data = data.get('resume_data', {})
+        
+        if not resume_text:
+            return jsonify({'error': 'Resume text is required'}), 400
+        
+        # Check ATS compatibility
+        from app.services.ats_compatibility_service import ATSCompatibilityChecker
+        ats_checker = ATSCompatibilityChecker()
+        
+        result = ats_checker.check_compatibility(resume_text, resume_data)
+        
+        return jsonify({
+            'is_ats_friendly': result.is_ats_friendly,
+            'score': result.score,
+            'main_issues': result.main_issues,
+            'quick_fixes': result.quick_fixes
+        })
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
