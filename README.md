@@ -75,18 +75,6 @@ Job Description Upload → Resume Upload → Evaluation Pipeline → Results Das
 - **Semantic Search** - Vector-based similarity matching ✅
 - **Comprehensive Scoring** - Multi-dimensional evaluation ✅
 
-### ⚠️ **Technologies with Fallbacks**
-
-#### **Currently in Fallback Mode**
-- **ChromaDB** - Fallback to in-memory storage (SQLite version compatibility issue)
-- **Sentence Transformers** - Fallback to TF-IDF similarity (HuggingFace Hub issue)
-- **OpenAI API** - Fallback to basic feedback generation (quota/API key issue)
-
-#### **Not Implemented**
-- **LangSmith** - Observability and debugging (planned for future)
-- **Streamlit** - Alternative frontend (not used, using Flask instead)
-- **FAISS/Pinecone** - Alternative vector stores (ChromaDB prioritized)
-
 ##  System Features
 
 1. **Resume & Job Description Parsing**
