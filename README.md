@@ -1,6 +1,6 @@
 # Automated Resume Relevance Check System
 
-It is an AI-powered Resume Relevance system that automatically evaluates resume relevance against job descriptions, providing scoring, feedback, and recommendations for both recruiters and students.
+An AI-powered system that automatically evaluates resume relevance against job descriptions, providing scoring, feedback, and recommendations for both recruiters and students.
 
 
 ## 🎯 Features
