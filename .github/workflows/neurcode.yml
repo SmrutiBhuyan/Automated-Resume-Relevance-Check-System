@@ -1,0 +1,28 @@
+name: Neurcode Gatekeeper
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pull-requests: write  # Required to post comments/status
+
+jobs:
+  verify:
+    name: Verify Scope & Policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical: Neurcode needs full history to calculate diffs
+
+      - name: Run Neurcode Guard
+        uses: sujit-jaunjal/neurcode-actions/packages/action@main
+        with:
+          api_key: ${{ secrets.NEURCODE_API_KEY }}
+          # Optional: Fail the build if violations are found (Default: true)
+          fail_on_violation: true
