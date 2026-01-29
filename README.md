@@ -2,6 +2,7 @@
 
 It is an AI-powered Resume Relevance system that automatically evaluates resume relevance against job descriptions, providing scoring, feedback, and recommendations for both recruiters and students.
 
+console.log("hello world")
 ## 🎯 Features
 
 - **Automated Resume Parsing**: Extract structured data from PDF and DOCX resumes
