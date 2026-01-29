@@ -1,0 +1,7 @@
+{
+  "pattern": "unknown",
+  "invariants": [
+    "Follow existing project structure"
+  ],
+  "domainBoundaries": []
+}
